@@ -13,7 +13,11 @@
     "banner_id_saved": "",
     "banner_id_about": "",
     "interstitial_id": "",
-    "app_open_id": ""
+    "app_open_id": "",
+    "yandex_fallback_enabled": true,
+    "yandex_banner_id": "",
+    "yandex_interstitial_id": "",
+    "yandex_app_open_id": ""
   },
   "iap": {
     "show_remove_ads": true,
