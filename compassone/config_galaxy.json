@@ -1,0 +1,39 @@
+{
+  "config_version": 1,
+  "ads": {
+    "enabled": false,
+    "banner_enabled": true,
+    "interstitial_enabled": true,
+    "interstitial_cooldown_sec": 120,
+    "interstitial_min_actions": 4,
+    "app_open_enabled": false,
+    "app_open_cooldown_sec": 300,
+    "ad_free_first_sessions": 2,
+    "banner_id_gps": "",
+    "banner_id_saved": "",
+    "banner_id_about": "",
+    "interstitial_id": "",
+    "app_open_id": "",
+    "yandex_fallback_enabled": true,
+    "yandex_banner_id": "",
+    "yandex_interstitial_id": "",
+    "yandex_app_open_id": ""
+  },
+  "iap": {
+    "show_remove_ads": true,
+    "highlight_product": "compass_one_pro",
+    "sale_mode": false,
+    "sale_banner_text": ""
+  },
+  "features": {
+    "qibla_enabled": true,
+    "sun_moon_enabled": true,
+    "widget_enabled": true
+  },
+  "app": {
+    "min_version_code": 1,
+    "force_update": false,
+    "update_message": "",
+    "latest_version_code": 3
+  }
+}
