@@ -100,17 +100,17 @@ section{padding:clamp(56px,8vw,104px) 0;border-top:1px solid var(--line)}
 .score-row p{margin:0;font-size:.9rem;color:var(--slate);line-height:1.5}
 .hi{color:#4ADE80}.mid{color:#FBBF24}.lo{color:var(--north)}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
 .cell{background:var(--void);padding:26px 24px}
 .cell .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--cyan);text-transform:uppercase;display:block;margin-bottom:12px}
 .cell p{margin:0;font-size:.92rem;color:var(--slate);line-height:1.55}
 
 /* ---------- shots ---------- */
-.rail{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 24px 20px;margin:0 -24px;-webkit-overflow-scrolling:touch}
+.rail{display:flex;gap:18px;align-items:flex-start;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 24px 20px;margin:0 -24px;-webkit-overflow-scrolling:touch}
 .rail::-webkit-scrollbar{height:6px}
 .rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
-.rail figure{margin:0;flex:0 0 auto;width:min(272px,64vw);scroll-snap-align:center}
-.rail img{width:100%;height:auto;border-radius:14px;border:1px solid var(--line);display:block}
+.rail figure{margin:0;flex:0 0 auto;scroll-snap-align:center}
+.rail img{height:clamp(360px,46vw,460px);width:auto;border-radius:14px;border:1px solid var(--line);display:block}
 .rail figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.09em;color:var(--slate);margin-top:11px;text-transform:uppercase}
 
 /* ---------- privacy + footer ---------- */
@@ -407,7 +407,8 @@ footer{border-top:1px solid var(--line);padding:44px 0 60px}
 
     const shown = norm(-heading);
     ring.setAttribute("transform", "rotate(" + heading + " 200 200)");
-    degEl.textContent = Math.round(shown) + "°";
+    // Round first, then wrap: 359.6 must read 0°, never 360°.
+    degEl.textContent = (Math.round(shown) % 360) + "°";
     cardEl.textContent = CARDINALS[Math.round(shown / 45) % 8];
 
     const t = Math.round(trust);
