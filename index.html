@@ -3,31 +3,428 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Compass One</title>
+<title>Compass One — a compass that tells you when it's wrong</title>
+<meta name="description" content="Offline compass for Android with a live Trust Score, Qibla direction, GPS tools and real sensor diagnostics. No account, no tracking.">
+<link rel="icon" href="assets/favicon.png">
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<meta property="og:title" content="Compass One">
+<meta property="og:description" content="A compass that tells you when it's wrong. Offline, private, and honest about its own accuracy.">
+<meta property="og:image" content="assets/icon.png">
+<meta name="theme-color" content="#08090C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: light dark; }
-  body { margin:0 auto; padding:4rem 1.25rem; max-width:34rem; text-align:center;
-    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    color:#16181d; background:#fff; }
-  h1 { font-size:2rem; margin:0 0 .5rem; letter-spacing:-.02em; }
-  p { color:#4b5563; }
-  a { color:#0b7285; }
-  .links { margin-top:2rem; display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
-  .links a { display:inline-block; padding:.6rem 1.1rem; border:1px solid #e5e7eb;
-    border-radius:8px; text-decoration:none; }
-  @media (prefers-color-scheme: dark) {
-    body { color:#e6e8ec; background:#101216; } p { color:#9aa1ac; }
-    a { color:#4ecdc4; } .links a { border-color:#262b33; }
-  }
+:root{
+  --void:#08090C; --panel:#101319; --line:#1E232C;
+  --cyan:#00D2E6; --north:#FF5252;
+  --bone:#EAECF2; --slate:#79828F;
+  --display:"Space Grotesk",system-ui,sans-serif;
+  --body:"Inter",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--void); color:var(--bone);
+  font-family:var(--body); font-size:16px; line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+
+/* Cardinal eyebrow — the subject's own alphabet for parts of a whole,
+   instead of arbitrary 01 / 02 / 03. */
+.card-mark{
+  display:flex;align-items:center;gap:12px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.22em;
+  color:var(--slate);text-transform:uppercase;margin-bottom:18px;
+}
+.card-mark b{
+  font-family:var(--display);font-size:13px;font-weight:700;
+  color:var(--cyan);letter-spacing:0;
+}
+.card-mark i{flex:1;height:1px;background:var(--line);max-width:120px}
+
+h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.03em;line-height:1.08;margin:0}
+h1{font-size:clamp(2.4rem,6.2vw,4.1rem)}
+h2{font-size:clamp(1.7rem,3.6vw,2.5rem);margin-bottom:14px}
+h3{font-size:1.05rem;letter-spacing:-.01em;margin-bottom:6px}
+p{margin:0 0 1rem}
+.lede{font-size:clamp(1rem,1.6vw,1.15rem);color:#B9C0CC;max-width:44ch}
+.muted{color:var(--slate)}
+a{color:var(--cyan)}
+a:focus-visible,button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:4px}
+
+/* ---------- hero ---------- */
+.hero{padding:clamp(56px,9vw,110px) 0 clamp(48px,7vw,88px)}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(28px,5vw,72px);align-items:center}
+.appmark{display:flex;align-items:center;gap:14px;margin-bottom:26px}
+.appmark img{width:52px;height:52px;border-radius:13px}
+.appmark span{font-family:var(--display);font-weight:500;font-size:1.05rem;letter-spacing:-.01em}
+.hero h1 em{font-style:normal;color:var(--north)}
+.hero .lede{margin-top:20px}
+.badge{display:inline-block;margin-top:30px;transition:transform .18s ease,filter .18s ease}
+.badge img{display:block;height:56px;width:auto}
+.badge:hover{transform:translateY(-2px);filter:brightness(1.08)}
+.hero-note{font-family:var(--mono);font-size:12px;color:var(--slate);margin-top:14px}
+
+/* ---------- signature: live dial ---------- */
+.dial-stage{display:flex;flex-direction:column;align-items:center;gap:18px}
+.dial{
+  width:min(380px,78vw);aspect-ratio:1;position:relative;
+  touch-action:none;cursor:grab;
+}
+.dial:active{cursor:grabbing}
+.dial svg{width:100%;height:100%;display:block}
+.readout{display:flex;align-items:baseline;gap:10px;font-family:var(--display);font-weight:700}
+.readout .deg{font-size:2.5rem;letter-spacing:-.04em}
+.readout .card{font-size:1.5rem;color:var(--cyan)}
+.trust{
+  display:flex;align-items:center;gap:10px;
+  font-family:var(--mono);font-size:12px;color:var(--slate);
+  border:1px solid var(--line);border-radius:999px;padding:7px 15px;
+}
+.trust .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);transition:background .3s}
+.trust .val{color:var(--bone)}
+.hint{font-family:var(--mono);font-size:11px;color:#4E5763;letter-spacing:.06em;transition:opacity .4s}
+
+/* ---------- sections ---------- */
+section{padding:clamp(56px,8vw,104px) 0;border-top:1px solid var(--line)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,64px);align-items:start}
+
+.score-vis{border:1px solid var(--line);border-radius:16px;padding:26px;background:var(--panel)}
+.score-row{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.score-row:last-child{border-bottom:0;padding-bottom:0}
+.score-row .n{font-family:var(--display);font-weight:700;font-size:1.35rem;min-width:62px}
+.score-row .t{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.score-row p{margin:0;font-size:.9rem;color:var(--slate);line-height:1.5}
+.hi{color:#4ADE80}.mid{color:#FBBF24}.lo{color:var(--north)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.cell{background:var(--void);padding:26px 24px}
+.cell .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--cyan);text-transform:uppercase;display:block;margin-bottom:12px}
+.cell p{margin:0;font-size:.92rem;color:var(--slate);line-height:1.55}
+
+/* ---------- shots ---------- */
+.rail{display:flex;gap:18px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 24px 20px;margin:0 -24px;-webkit-overflow-scrolling:touch}
+.rail::-webkit-scrollbar{height:6px}
+.rail::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px}
+.rail figure{margin:0;flex:0 0 auto;width:min(272px,64vw);scroll-snap-align:center}
+.rail img{width:100%;height:auto;border-radius:14px;border:1px solid var(--line);display:block}
+.rail figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.09em;color:var(--slate);margin-top:11px;text-transform:uppercase}
+
+/* ---------- privacy + footer ---------- */
+.pill-list{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-wrap:wrap;gap:9px}
+.pill-list li{font-family:var(--mono);font-size:12px;color:var(--slate);border:1px solid var(--line);border-radius:999px;padding:7px 14px}
+footer{border-top:1px solid var(--line);padding:44px 0 60px}
+.foot{display:flex;flex-wrap:wrap;gap:20px 34px;align-items:center;justify-content:space-between}
+.foot-links{display:flex;flex-wrap:wrap;gap:22px;font-size:.9rem}
+.foot-links a{color:var(--slate);text-decoration:none}
+.foot-links a:hover{color:var(--cyan)}
+.foot small{font-family:var(--mono);font-size:11px;color:#4E5763}
+
+@media (max-width:820px){
+  .hero-grid,.split{grid-template-columns:1fr}
+  .hero-grid{gap:44px}
+  .dial-stage{order:-1}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *{animation:none!important;transition:none!important}
+}
 </style>
 </head>
 <body>
-  <h1>Compass One</h1>
-  <p>Premium offline compass and outdoor navigation for Android.<br>
-     No tracking. No accounts. Works without internet.</p>
-  <div class="links">
-    <a href="privacy.html">Privacy Policy</a>
-    <a href="mailto:chennoufo11@gmail.com">Support</a>
+
+<!-- ======================= HERO ======================= -->
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="appmark">
+        <img src="assets/icon.png" alt="" width="52" height="52">
+        <span>Compass One</span>
+      </div>
+
+      <h1>A compass that tells you when it's <em>wrong</em>.</h1>
+
+      <p class="lede">Every compass app points somewhere. Compass One reads your
+      phone's magnetometer, accelerometer and gyroscope, and scores how much that
+      direction can be trusted — live, from 0&nbsp;to&nbsp;100.</p>
+
+      <a class="badge" href="https://galaxystore.samsung.com/detail/com.ais.compassone.galaxy">
+        <img src="assets/galaxy-badge.png" alt="Available on Galaxy Store" width="652" height="177">
+      </a>
+      <p class="hero-note">Free · Works offline · No account</p>
+    </div>
+
+    <div class="dial-stage">
+      <div class="dial" id="dial" role="img"
+           aria-label="Interactive compass dial. Drag to rotate it.">
+        <svg viewBox="0 0 400 400" aria-hidden="true">
+          <defs>
+            <radialGradient id="face" cx="50%" cy="42%" r="62%">
+              <stop offset="0%" stop-color="#1A1E27"/>
+              <stop offset="100%" stop-color="#0B0D12"/>
+            </radialGradient>
+          </defs>
+          <circle cx="200" cy="200" r="192" fill="#0E1116"/>
+          <circle cx="200" cy="200" r="192" fill="none" stroke="#232833" stroke-width="1"/>
+          <circle cx="200" cy="200" r="158" fill="url(#face)"/>
+          <circle cx="200" cy="200" r="158" fill="none" stroke="#1B2029" stroke-width="1"/>
+          <g id="ring"></g>
+          <!-- The needle is fixed and the ring turns beneath it — exactly how the app works. -->
+          <path d="M200 84 L188 200 L212 200 Z" fill="#FF5252"/>
+          <path d="M200 292 L188 200 L212 200 Z" fill="#D7DAE0"/>
+          <circle cx="200" cy="200" r="7" fill="#00D2E6"/>
+          <circle cx="200" cy="200" r="3" fill="#08090C"/>
+        </svg>
+      </div>
+
+      <div class="readout">
+        <span class="deg" id="deg">0°</span>
+        <span class="card" id="card">N</span>
+      </div>
+
+      <div class="trust">
+        <span class="dot" id="tdot"></span>
+        <span>Trust</span>
+        <span class="val"><span id="tval">100</span>/100</span>
+      </div>
+
+      <p class="hint" id="hint">DRAG THE DIAL</p>
+    </div>
   </div>
+</header>
+
+<!-- ======================= TRUST SCORE ======================= -->
+<section>
+  <div class="wrap split">
+    <div>
+      <div class="card-mark"><b>N</b><i></i>The difference</div>
+      <h2>Know when not to believe it</h2>
+      <p class="lede">A phone compass fails quietly. Hold it near a laptop, a car
+      door or a magnetic case and the needle still points confidently — at the
+      wrong thing.</p>
+      <p class="muted">Compass One watches for that. It combines sensor accuracy,
+      magnetic field strength and how much the heading is drifting into one number,
+      and says in plain words what is pulling it off.</p>
+    </div>
+
+    <div class="score-vis">
+      <div class="score-row">
+        <span class="n hi">92</span>
+        <div><span class="t hi">High</span><p>Field 48 µT, steady heading. Trust it.</p></div>
+      </div>
+      <div class="score-row">
+        <span class="n mid">61</span>
+        <div><span class="t mid">Medium</span><p>Magnetic field elevated — something nearby is interfering.</p></div>
+      </div>
+      <div class="score-row">
+        <span class="n lo">34</span>
+        <div><span class="t lo">Low</span><p>Sensor accuracy unreliable. Calibrate before you rely on this.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= FEATURES ======================= -->
+<section>
+  <div class="wrap">
+    <div class="card-mark"><b>E</b><i></i>What's inside</div>
+    <h2 style="margin-bottom:34px">Built for when it matters</h2>
+
+    <div class="grid">
+      <div class="cell">
+        <span class="k">Qibla</span>
+        <h3>Direction to the Kaaba</h3>
+        <p>Great-circle bearing from wherever you are, with a marker on the dial and a pulse when you line up.</p>
+      </div>
+      <div class="cell">
+        <span class="k">True north</span>
+        <h3>Magnetic or geographic</h3>
+        <p>Applies the magnetic declination for your location, so maps and the needle finally agree.</p>
+      </div>
+      <div class="cell">
+        <span class="k">GPS</span>
+        <h3>Coordinates and places</h3>
+        <p>Latitude, longitude, altitude, speed and accuracy. Save places with notes, sort them by distance.</p>
+      </div>
+      <div class="cell">
+        <span class="k">Diagnostics</span>
+        <h3>Sensor health</h3>
+        <p>Which sensors your phone actually has, what they are reading now, and Samsung-specific fixes when they misbehave.</p>
+      </div>
+      <div class="cell">
+        <span class="k">Calibration</span>
+        <h3>Figure-8, with feedback</h3>
+        <p>Live accuracy while you move — and it says so when interference, not calibration, is the real problem.</p>
+      </div>
+      <div class="cell">
+        <span class="k">Sun &amp; moon</span>
+        <h3>Where the light is</h3>
+        <p>Sun and moon positions on the dial, with sunrise and sunset for your coordinates.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= SCREENSHOTS ======================= -->
+<section>
+  <div class="wrap">
+    <div class="card-mark"><b>S</b><i></i>On your phone</div>
+    <h2 style="margin-bottom:30px">AMOLED black, by default</h2>
+    <div class="rail">
+      <figure><img src="assets/shots/1-compass.jpg" alt="Compass screen reading 280 degrees west" loading="lazy" width="739" height="1400"><figcaption>Compass</figcaption></figure>
+      <figure><img src="assets/shots/2-sensor.jpg" alt="Sensor Health screen with live magnetometer readings" loading="lazy" width="760" height="1142"><figcaption>Sensor health</figcaption></figure>
+      <figure><img src="assets/shots/3-dial.jpg" alt="Compass dial in an alternate theme" loading="lazy" width="760" height="1140"><figcaption>Themes</figcaption></figure>
+      <figure><img src="assets/shots/4-languages.jpg" alt="Language picker listing ten languages" loading="lazy" width="760" height="1142"><figcaption>10 languages</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= PRIVACY ======================= -->
+<section>
+  <div class="wrap split">
+    <div>
+      <div class="card-mark"><b>W</b><i></i>Privacy</div>
+      <h2>It never asks who you are</h2>
+      <p class="lede">The compass runs entirely on your phone's sensors. There is
+      no account to make and nothing to sign in to.</p>
+      <p class="muted">Location is optional — the app does not ask on first launch,
+      and the compass works without it. When you do grant it, it stays on the
+      device. Saved places live in local storage and leave when you uninstall.</p>
+      <p style="margin-top:18px"><a href="privacy.html">Read the full privacy policy →</a></p>
+    </div>
+    <div>
+      <ul class="pill-list">
+        <li>No analytics</li>
+        <li>No crash reporting</li>
+        <li>No accounts</li>
+        <li>No tracking</li>
+        <li>Works offline</li>
+        <li>Location optional</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div class="foot-links">
+      <a href="privacy.html">Privacy policy</a>
+      <a href="mailto:chennoufo11@gmail.com">chennoufo11@gmail.com</a>
+      <a href="https://galaxystore.samsung.com/detail/com.ais.compassone.galaxy">Galaxy Store</a>
+    </div>
+    <small>© 2026 GWAPPS</small>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const CARDINALS = ["N","NE","E","SE","S","SW","W","NW"];
+  const ring   = document.getElementById("ring");
+  const dial   = document.getElementById("dial");
+  const degEl  = document.getElementById("deg");
+  const cardEl = document.getElementById("card");
+  const tval   = document.getElementById("tval");
+  const tdot   = document.getElementById("tdot");
+  const hint   = document.getElementById("hint");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // --- build the face: ticks every 5°, cardinals every 90° ---
+  const NS = "http://www.w3.org/2000/svg";
+  const frag = document.createDocumentFragment();
+  for (let d = 0; d < 360; d += 5) {
+    const cardinal = d % 90 === 0, major = d % 30 === 0;
+    const len = cardinal ? 26 : major ? 18 : 10;
+    const rad = (d - 90) * Math.PI / 180;
+    const l = document.createElementNS(NS, "line");
+    l.setAttribute("x1", 200 + 190 * Math.cos(rad));
+    l.setAttribute("y1", 200 + 190 * Math.sin(rad));
+    l.setAttribute("x2", 200 + (190 - len) * Math.cos(rad));
+    l.setAttribute("y2", 200 + (190 - len) * Math.sin(rad));
+    l.setAttribute("stroke", d === 0 ? "#FF5252" : cardinal ? "#C9CFDA" : major ? "#5A6472" : "#2C333F");
+    l.setAttribute("stroke-width", cardinal ? 3 : major ? 2 : 1);
+    l.setAttribute("stroke-linecap", "round");
+    frag.appendChild(l);
+  }
+  [["N",0],["E",90],["S",180],["W",270]].forEach(function (pair) {
+    const rad = (pair[1] - 90) * Math.PI / 180;
+    const t = document.createElementNS(NS, "text");
+    t.setAttribute("x", 200 + 128 * Math.cos(rad));
+    t.setAttribute("y", 200 + 128 * Math.sin(rad));
+    t.setAttribute("text-anchor", "middle");
+    t.setAttribute("dominant-baseline", "central");
+    t.setAttribute("font-family", "Space Grotesk, sans-serif");
+    t.setAttribute("font-size", "22");
+    t.setAttribute("font-weight", "700");
+    t.setAttribute("fill", pair[0] === "N" ? "#FF5252" : "#C9CFDA");
+    t.textContent = pair[0];
+    frag.appendChild(t);
+  });
+  ring.appendChild(frag);
+
+  let heading = 0, target = 0, trust = 100;
+  let dragging = false, lastAngle = 0, idle = 0;
+
+  function angleFrom(e) {
+    const r = dial.getBoundingClientRect();
+    return Math.atan2(e.clientY - (r.top + r.height / 2),
+                      e.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+  }
+
+  dial.addEventListener("pointerdown", function (e) {
+    dragging = true; lastAngle = angleFrom(e); idle = 0;
+    dial.setPointerCapture(e.pointerId);
+    if (hint) hint.style.opacity = "0";
+  });
+  dial.addEventListener("pointermove", function (e) {
+    if (!dragging) return;
+    const a = angleFrom(e);
+    let delta = a - lastAngle;
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+    target += delta; lastAngle = a;
+    // Jerky dragging stands in for an unsteady hand — the same thing that
+    // lowers the Trust Score in the app.
+    trust = Math.max(38, trust - Math.min(Math.abs(delta) * 0.9, 7));
+  });
+  function release() { dragging = false; }
+  dial.addEventListener("pointerup", release);
+  dial.addEventListener("pointercancel", release);
+
+  function norm(d) { return ((d % 360) + 360) % 360; }
+
+  function frame() {
+    if (!dragging) {
+      idle++;
+      // Settle back: the needle steadies and confidence returns, the way a real
+      // compass finds north once you stop waving the phone around.
+      if (idle > 40) trust = Math.min(100, trust + 0.35);
+      if (idle > 90) target += 0.06;
+    }
+    heading += (target - heading) * 0.12;
+
+    const shown = norm(-heading);
+    ring.setAttribute("transform", "rotate(" + heading + " 200 200)");
+    degEl.textContent = Math.round(shown) + "°";
+    cardEl.textContent = CARDINALS[Math.round(shown / 45) % 8];
+
+    const t = Math.round(trust);
+    tval.textContent = t;
+    tdot.style.background = t >= 80 ? "#4ADE80" : t >= 50 ? "#FBBF24" : "#FF5252";
+
+    requestAnimationFrame(frame);
+  }
+
+  if (reduce) {
+    ring.setAttribute("transform", "rotate(0 200 200)");
+    if (hint) hint.textContent = "";
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+
 </body>
 </html>
