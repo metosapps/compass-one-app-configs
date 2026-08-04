@@ -1,22 +1,18 @@
 {
-  "config_version": 1,
+  "config_version": 2,
   "ads": {
-    "enabled": false,
-    "banner_enabled": true,
-    "interstitial_enabled": true,
-    "interstitial_cooldown_sec": 120,
-    "interstitial_min_actions": 4,
-    "app_open_enabled": false,
+    "enabled": true,
+    "rewarded_interstitial_enabled": true,
+    "rewarded_interstitial_cooldown_sec": 120,
+    "rewarded_interstitial_min_actions": 4,
+    "rewarded_video_enabled": true,
+    "app_open_enabled": true,
     "app_open_cooldown_sec": 300,
-    "ad_free_first_sessions": 2,
-    "banner_id_gps": "",
-    "banner_id_saved": "",
-    "banner_id_about": "",
-    "interstitial_id": "",
-    "app_open_id": "",
-    "yandex_fallback_enabled": true,
-    "yandex_banner_id": "",
-    "yandex_interstitial_id": "",
+    "ad_free_first_sessions": 0,
+    "rewarded_interstitial_id": "ca-app-pub-8235247040566090/2247677359",
+    "rewarded_video_id": "ca-app-pub-8235247040566090/7172700971",
+    "app_open_id": "ca-app-pub-8235247040566090/9167208841",
+    "yandex_fallback_enabled": false,
     "yandex_app_open_id": ""
   },
   "iap": {
@@ -34,6 +30,6 @@
     "min_version_code": 1,
     "force_update": false,
     "update_message": "",
-    "latest_version_code": 3
+    "latest_version_code": 6
   }
 }
