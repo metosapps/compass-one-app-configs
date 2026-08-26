@@ -1,13 +1,13 @@
 {
-  "config_version": 2,
+  "config_version": 3,
   "ads": {
     "enabled": true,
     "rewarded_interstitial_enabled": true,
-    "rewarded_interstitial_cooldown_sec": 120,
-    "rewarded_interstitial_min_actions": 4,
+    "rewarded_interstitial_cooldown_sec": 0,
+    "rewarded_interstitial_min_actions": 1,
     "rewarded_video_enabled": true,
     "app_open_enabled": true,
-    "app_open_cooldown_sec": 300,
+    "app_open_cooldown_sec": 0,
     "ad_free_first_sessions": 0,
     "rewarded_interstitial_id": "ca-app-pub-8235247040566090/2247677359",
     "rewarded_video_id": "ca-app-pub-8235247040566090/7172700971",
